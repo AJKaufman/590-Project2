@@ -1,7 +1,8 @@
+// Credit to simple-server-collision by Cody Van De Mark
 const http = require('http');
+const socketio = require('socket.io');
 const path = require('path');
 const express = require('express');
-const socketio = require('socket.io');
 const sockets = require('./sockets.js');
 
 const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
@@ -25,4 +26,3 @@ server.listen(PORT, (err) => {
   }
   console.log(`Listening on port ${PORT}`);
 });
-

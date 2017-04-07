@@ -1,4 +1,5 @@
-class Character {
+// Credit to simple-server-collision by Cody Van De Mark
+class Player {
   constructor(hash) {
     this.hash = hash;
     this.lastUpdate = new Date().getTime();
@@ -21,4 +22,4 @@ class Character {
   }
 }
 
-module.exports = Character;
+module.exports = Player;
