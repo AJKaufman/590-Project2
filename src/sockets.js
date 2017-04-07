@@ -7,7 +7,7 @@ const players = {};
 // num to hold all of our connected users
 const roomList = {};
 let nextRoom = 0;
-let currentRoomCount = 0;
+let currentRoomCount = 1;
 
 let io;
 
@@ -25,13 +25,13 @@ const directions = {
 
 const setupSockets = (ioServer) => {
   io = ioServer;
-  
+
   io.on('connection', (sock) => {
     const socket = sock;
-    
-    // add a user to the count
-    currentRoomCount++;
 
+    // new user in this room
+    currentRoomCount++;
+    
     // send the user to their room
     socket.join(`room${nextRoom}`);
 
@@ -41,93 +41,92 @@ const setupSockets = (ioServer) => {
       console.log(`adding room${nextRoom} to roomList`);
       roomList[`room${nextRoom}`] = {};
     }
-    
+
     // generate the user's unique hash code
     const idString = `${socket.id}${new Date().getTime()}`;
     const hash = xxh.h32(idString, 0xCAFEBABE).toString(16);
-    
-    // add their hash to the user list    
-    players[hash] = new Player(hash);
+
     
     socket.hash = hash;
+
+    
+    players[hash] = new Player(hash);
+
+    io.sockets.in(`room${nextRoom}`).emit('joined', {
+      player: players[hash],
+      side: currentRoomCount,
+      room: `room${nextRoom}`,
+    });
     
     // create the playerData and send back left or right side
-    if(currentRoomCount > 1) {
+    if (currentRoomCount >= 2) {
       currentRoomCount = 0;
-      const playerData = {
-        player: players[hash],
-        side: currentRoomCount,
-        room: `room${nextRoom}`,
-      };
+      
+      console.log("left");
     } else {
-      const playerData = {
-        player: players[hash],
-        side: currentRoomCount,
-        room: `room${nextRoom}`,
-      };
       nextRoom++;
-    }    
+      
+      console.log("right");
+    }
     
-    io.sockets.in(`room${nextRoom}`).emit('joined', playerData);
-    
+
     socket.on('movementUpdate', (data) => {
       players[socket.hash] = data.square;
       players[socket.hash].lastUpdate = new Date().getTime();
-      
+
       physics.setPlayer(players[socket.hash]);
       
       io.sockets.in(data.room).emit('updatedMovement', players[socket.hash]);
     });
-    
+
     socket.on('hit', (data) => {
       const hit = data;
-      
+
       let handleHitEvent = true;
-      
-      switch(hit.direction) {
+
+      switch (hit.direction) {
         case directions.DOWN: {
           hit.width = 66;
           hit.height = 183;
-          hit.y = hit.y + 183;
+          hit.y += 183;
           break;
         }
         case directions.LEFT: {
           hit.width = 183;
           hit.height = 66;
-          hit.x = hit.x - 183;
+          hit.x -= 183;
           break;
         }
         case directions.UP: {
           hit.width = 66;
           hit.height = 183;
-          hit.y = hit.y - 183;
+          hit.y -= 183;
           break;
         }
         case directions.RIGHT: {
           hit.width = 183;
           hit.height = 66;
-          hit.x = hit.x + 183;
-          break
+          hit.x += 183;
+          break;
         }
         default: {
           handleHitEvent = false;
         }
       }
-      
-      if(handleHitEvent) {
+
+      if (handleHitEvent) {
         io.sockets.in('room1').emit('hitUpdate', hit);
         physics.addHit(hit);
       }
-      
     });
-    
+
     socket.on('disconnect', () => {
-      io.sockets.in('room1').emit('left', players[sockets.hash]);
-      
+      io.sockets.in('room1').emit('left', players[socket.hash]);
+
       delete players[socket.hash];
-      
+
       physics.setPlayerList(players);
-      
+
       socket.leave('room1');
     });
   });

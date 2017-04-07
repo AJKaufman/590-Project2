@@ -55,17 +55,10 @@ const redraw = (time) => {
       }
     }
 
-    ctx.drawImage(
-      walkImage, 
-      spriteSizes.WIDTH * square.frame,
-      spriteSizes.HEIGHT * square.direction,
-      spriteSizes.WIDTH,
-      spriteSizes.HEIGHT,
-      square.x,
-      square.y,
-      spriteSizes.WIDTH, 
-      spriteSizes.HEIGHT
-    );
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'white';
+    
+    ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
     
     ctx.strokeRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
   }

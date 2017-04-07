@@ -1,88 +1,69 @@
 // Credit to simple-server-collision by Cody Van De Mark
-const sockets = require('./sockets.js');
+// const sockets = require('./sockets.js');
 
-let charList = {};
-const hits = [];
+let playerList = {};
+// const hits = [];
 
-const checkCollisions = (rect1, rect2, width, height) => {
-  if (rect1.x < rect2.x + width &&
-     rect1.x + width > rect2.x &&
-     rect1.y < rect2.y + height &&
-     height + rect1.y > rect2.y) {
-    return true;
-  }
-  return false;
+// const checkCollisions = (rect1, rect2, width, height) => {
+//  if (rect1.x < rect2.x + width &&
+//     rect1.x + width > rect2.x &&
+//     rect1.y < rect2.y + height &&
+//     height + rect1.y > rect2.y) {
+//    return true;
+//  }
+//  return false;
+// };
+//
+// const checkHitCollision = (player, hitObj) => {
+//  const hit = hitObj;
+//
+//  if (player.hash === hit.hash) {
+//    return false;
+//  }
+//
+//  return checkCollisions(player, hit, hit.width, hit.height);
+// };
+//
+// const checkHits = () => {
+//  const keys = Object.keys(playerList);
+//  const players = playerList;
+//
+//
+//  const char1 = players[keys[k]];
+//
+//  const hit = checkHitCollision(cha1, hits[i]);
+//
+//  if (hit) {
+//    sockets.handleHit(char1.hash);
+//    delete playerList[char1.hash];
+//  } else {
+//    console.log('miss');
+//  }
+//
+//
+//  hit.splice(i);
+//  i--;
+// };
+
+const setPlayerList = (serverPlayerList) => {
+  playerList = serverPlayerList;
 };
 
-const checkPaddleCollision = (character, hitObj) => {
-  const hit = hitObj;
-
-  if(character.hash === hit.hash) {
-    return false;
-  }
-  
-  return checkCollisions(character, attack, attack.width, attack.height);
+const setPlayer = (player) => {
+  playerList[player.hash] = player;
 };
 
-const checkHits = () => {
-  const keys = Object.keys(charList);
-  const characters = charList;
-  
-  
-      const char1 = characters[keys[k]];
-      
-      const hit = checkAttackCollision(cha1, attacks[i]);
-      
-      if(hit) {
-        sockets.handleAttack(char1.hash);
-        delete charList[char1.hash];
-      } else {
-        console.log('miss');
-      }
-    
-    
-    attack.splice(i);
-    i--;
-    
-  
-  
-};
-
-const setPlayerList = (characterList) => {
-  charList = characterList;
-};
-
-const setPlayer = (character) => {
-  charList[character.hash] = character;
-};
-
-const addHit = (hit) => {
-  hits.push(hit);
-};
-
-setInterval(() => {
-  if(hits.length > 0) {
-      checkHits();
-  }
-}, 20);
+// const addHit = (hit) => {
+//  hits.push(hit);
+// };
+//
+// setInterval(() => {
+//  if (hits.length > 0) {
+//    checkHits();
+//  }
+// }, 20);
 
 module.exports.setPlayerList = setPlayerList;
 module.exports.setPlayer = setPlayer;
-module.exports.addHit = addHit;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// module.exports.addHit = addHit;
 
