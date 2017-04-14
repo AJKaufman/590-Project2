@@ -1,3 +1,4 @@
+// code used from simple server collision by Cody Van De Mark
 const directions = {
   DOWNLEFT: 0,
   DOWN: 1,
@@ -10,8 +11,8 @@ const directions = {
 };
 
 const spriteSizes = {
-  WIDTH: 31,
-  HEIGHT: 121
+  WIDTH: 29,
+  HEIGHT: 119
 };
 
 const lerp = (v0, v1, alpha) => {
@@ -20,7 +21,7 @@ const lerp = (v0, v1, alpha) => {
 
 const redraw = (time) => {
   updatePosition();
-
+  
   ctx.clearRect(0, 0, 1000, 1000);
 
   const keys = Object.keys(squares);
@@ -41,6 +42,8 @@ const redraw = (time) => {
 
     square.x = lerp(square.prevX, square.destX, square.alpha);
     square.y = lerp(square.prevY, square.destY, square.alpha);
+    ball.x = lerp(ball.prevX, ball.destX, 0.5);
+    ball.y = lerp(ball.prevY, ball.destY, 0.5);
 
     // if we are mid animation or moving in any direction
     if(square.frame > 0 || (square.moveUp || square.moveDown)) {
@@ -60,9 +63,14 @@ const redraw = (time) => {
     
     // draw ball and local paddle
     if(ball) {
-      ctx.fillRect(ball.x - 25, square.y - 25, 50, 50);
+      ctx.fillRect(ball.x - 15, ball.y - 15, 30, 30);
     }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+    
+    if(squares[hash2]) {
+      ctx.fillRect(squares[hash2].x, squares[hash2].y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+      ctx.strokeRect(squares[hash2].x, squares[hash2].y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+    }
     
     ctx.strokeRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
   }
@@ -70,3 +78,21 @@ const redraw = (time) => {
 
   animationFrame = requestAnimationFrame(redraw);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

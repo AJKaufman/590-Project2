@@ -6,6 +6,7 @@ let slashImage;
 //our websocket connection
 let socket; 
 let hash;
+let hash2;
 let animationFrame;
 let squares = {};
 let attacks = [];
@@ -15,6 +16,9 @@ let myRoom;
 let side;
 let ball;
 let ballMove;
+let ballChangeCD;
+let ballX;
+let ballY;
 
 
 
@@ -70,10 +74,23 @@ const removeWaitMessage = () => {
   const jrb = document.querySelector('#joinRoomButton');
   jrb.innerHTML = "";
   
+  if(side === 2) {
+    ballX = 4;
+    ballY = 4.5;
+    socket.emit('sendP1Hash', { hash2: hash, room: myRoom });
+  }
+  
   // get the ball rolling
   ballMove = true;
 };
 
+const saveP1Hash = (data) => {
+  console.log('saving p1 hash');
+  if(side === 1) {
+    hash2 = data.hash2;
+    console.log(hash2);
+  }
+};
 
 const joinGame = () => {
   console.log('join GAME clicked');
@@ -101,6 +118,25 @@ const hostRoom = () => {
   
 };
 
+const scorePoint = (data) => {
+  if(data.hash === hash) {
+    console.log('left player score');
+    myScore++;
+    let displayScore = document.querySelector('#score');
+    displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore;
+    displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore + "</div>";
+  } else if (data.hash === hash2) {
+    console.log('right player score');
+    oScore++;
+    let displayScore = document.querySelector('#score');
+    displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
+    displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
+  } else {
+    console.log('scorePoint method is not registering who got the point correctly');
+  }
+  
+};
+
 const init = () => {
  
   canvas = document.querySelector('#canvas');
@@ -114,7 +150,9 @@ const init = () => {
     
     socket.on('joined', setUser);
     socket.on('removeWaitMessage', removeWaitMessage);
+    socket.on('saveP1Hash', saveP1Hash);
     socket.on('updatedMovement', update);
+    socket.on('addPoint', scorePoint);
     socket.on('left', removeUser);
   //  // gives the player a point if they earned it in the last round
   //  // checks if the player won the game

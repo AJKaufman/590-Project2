@@ -48,7 +48,7 @@ const setupSockets = (ioServer) => {
 
       socket.hash = hash;
       players[hash] = new Player(hash);
-
+      
       console.log(`room${nextRoom}`);
 
       io.sockets.in(`room${nextRoom}`).emit('joined', {
@@ -128,9 +128,14 @@ const setupSockets = (ioServer) => {
 
 
     socket.on('waitMessage', (data) => {
-      io.sockets.in(data.room).emit('removeWaitMessage', {});
+      io.sockets.in(data.room).emit('removeWaitMessage', { data: data});
     });
 
+    // allows player 2 to save the hash of player 1
+    socket.on('sendP1Hash', (data) => {
+      io.sockets.in(data.room).emit('saveP1Hash', { hash2: data.hash2, player: players[data.hash2], });
+    });
+    
     socket.on('movementUpdate', (data) => {
       players[socket.hash] = data.square;
       players[socket.hash].lastUpdate = new Date().getTime();
@@ -155,6 +160,10 @@ const setupSockets = (ioServer) => {
       io.sockets.in(data.room).emit('updatedMovement', serverData);
     });
 
+    socket.on('goal', (data) => {
+      io.sockets.in(data.room).emit('addPoint', { hash: data.hash });
+    });
+    
     socket.on('hit', (data) => {
       const hit = data;
 

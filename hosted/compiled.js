@@ -1,5 +1,6 @@
 "use strict";
 
+// code used from simple server collision by Cody Van De Mark
 var directions = {
   DOWNLEFT: 0,
   DOWN: 1,
@@ -12,8 +13,8 @@ var directions = {
 };
 
 var spriteSizes = {
-  WIDTH: 31,
-  HEIGHT: 121
+  WIDTH: 29,
+  HEIGHT: 119
 };
 
 var lerp = function lerp(v0, v1, alpha) {
@@ -42,6 +43,8 @@ var redraw = function redraw(time) {
 
     square.x = lerp(square.prevX, square.destX, square.alpha);
     square.y = lerp(square.prevY, square.destY, square.alpha);
+    ball.x = lerp(ball.prevX, ball.destX, 0.5);
+    ball.y = lerp(ball.prevY, ball.destY, 0.5);
 
     // if we are mid animation or moving in any direction
     if (square.frame > 0 || square.moveUp || square.moveDown) {
@@ -61,9 +64,14 @@ var redraw = function redraw(time) {
 
     // draw ball and local paddle
     if (ball) {
-      ctx.fillRect(ball.x - 25, square.y - 25, 50, 50);
+      ctx.fillRect(ball.x - 15, ball.y - 15, 30, 30);
     }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+
+    if (squares[hash2]) {
+      ctx.fillRect(squares[hash2].x, squares[hash2].y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+      ctx.strokeRect(squares[hash2].x, squares[hash2].y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
+    }
 
     ctx.strokeRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
   }
@@ -80,6 +88,7 @@ var slashImage = void 0;
 //our websocket connection
 var socket = void 0;
 var hash = void 0;
+var hash2 = void 0;
 var animationFrame = void 0;
 var squares = {};
 var attacks = [];
@@ -89,6 +98,9 @@ var myRoom = void 0;
 var side = void 0;
 var ball = void 0;
 var ballMove = void 0;
+var ballChangeCD = void 0;
+var ballX = void 0;
+var ballY = void 0;
 
 // The reload function. 
 // Seperated due to the automatic initiation due to ES6 syntax
@@ -140,8 +152,22 @@ var removeWaitMessage = function removeWaitMessage() {
   var jrb = document.querySelector('#joinRoomButton');
   jrb.innerHTML = "";
 
+  if (side === 2) {
+    ballX = 4;
+    ballY = 4.5;
+    socket.emit('sendP1Hash', { hash2: hash, room: myRoom });
+  }
+
   // get the ball rolling
   ballMove = true;
+};
+
+var saveP1Hash = function saveP1Hash(data) {
+  console.log('saving p1 hash');
+  if (side === 1) {
+    hash2 = data.hash2;
+    console.log(hash2);
+  }
 };
 
 var joinGame = function joinGame() {
@@ -169,6 +195,24 @@ var hostRoom = function hostRoom() {
   }
 };
 
+var scorePoint = function scorePoint(data) {
+  if (data.hash === hash) {
+    console.log('left player score');
+    myScore++;
+    var displayScore = document.querySelector('#score');
+    displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore;
+    displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore + "</div>";
+  } else if (data.hash === hash2) {
+    console.log('right player score');
+    oScore++;
+    var _displayScore = document.querySelector('#score');
+    _displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
+    _displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
+  } else {
+    console.log('scorePoint method is not registering who got the point correctly');
+  }
+};
+
 var init = function init() {
 
   canvas = document.querySelector('#canvas');
@@ -182,7 +226,9 @@ var init = function init() {
 
     socket.on('joined', setUser);
     socket.on('removeWaitMessage', removeWaitMessage);
+    socket.on('saveP1Hash', saveP1Hash);
     socket.on('updatedMovement', update);
+    socket.on('addPoint', scorePoint);
     socket.on('left', removeUser);
     //  // gives the player a point if they earned it in the last round
     //  // checks if the player won the game
@@ -202,12 +248,13 @@ var init = function init() {
 window.onload = init;
 'use strict';
 
+// code used from simple server collision by Cody Van De Mark
 var update = function update(data) {
 
   // if the square doesn't already exist, make it so!
   if (!squares[data.square.hash]) {
-    console.log('new square created');
-    squares[data.square.hash] = data;
+    console.log('new square created: ' + data.square.hash);
+    squares[data.square.hash] = data.square;
     return;
   }
 
@@ -223,14 +270,14 @@ var update = function update(data) {
   }
 
   var square = squares[data.square.hash];
-  square.prevX = data.prevX;
-  square.prevY = data.prevY;
-  square.destY = data.destY;
-  square.direction = data.direction;
-  square.moveLeft = data.moveLeft;
-  square.moveRight = data.moveRight;
-  square.moveDown = data.moveDown;
-  square.moveUp = data.moveUp;
+  square.prevX = data.square.prevX;
+  square.prevY = data.square.prevY;
+  square.destY = data.square.destY;
+  square.direction = data.square.direction;
+  square.moveLeft = data.square.moveLeft;
+  square.moveRight = data.square.moveRight;
+  square.moveDown = data.square.moveDown;
+  square.moveUp = data.square.moveUp;
   square.alpha = 0.05;
 };
 
@@ -281,13 +328,19 @@ var setUser = function setUser(data) {
     // make the ball
     ball = {};
     ball.x = canvas.width / 2;
-    ball.y = canvas.height + canvas.offsetHeight;
+    ball.y = canvas.height / 2;
     ball.prevX = canvas.width / 2;
-    ball.prevY = canvas.height + canvas.offsetHeight;
+    ball.prevY = canvas.height / 2;
     ball.destX = canvas.width / 2;
-    ball.destY = canvas.height + canvas.offsetHeight;
+    ball.destY = canvas.height / 2;
+    ballChangeCD = false;
 
     requestAnimationFrame(redraw);
+  } else {
+    console.log('other user');
+
+    hash2 = data.player.hash;
+    squares[hash2] = data.player;
   }
 };
 
@@ -347,14 +400,67 @@ var updatePosition = function updatePosition() {
 
   var squareData = {};
 
-  if (side === 2) {
+  if (side === 2 && ballX && ballY) {
 
     ball.prevX = ball.x;
     ball.prevY = ball.y;
 
     if (ballMove) {
-      ball.destX += 1;
-      ball.destY += 1;
+      ball.destX += ballX;
+      ball.destY += ballY;
+    }
+
+    // hitting left paddle
+    if (ball.destX <= squares[hash].x + 45 && ball.destX <= squares[hash2].x + 75 && ball.destY <= squares[hash].y + 120 && ball.destY >= squares[hash].y && ballChangeCD === false) {
+      ballX *= -1;
+      ballChangeCD = true;
+      console.log('hit left paddle');
+    } else {
+      ball.x = ball.destX;
+      ball.y = ball.destY;
+    }
+
+    // hitting right paddle
+    if (ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 60 && ball.destY >= squares[hash2].y - 60 && ballChangeCD === false) {
+      ballX *= -1;
+      ballChangeCD = true;
+      console.log('hit right paddle');
+    } else {
+      ball.x = ball.destX;
+      ball.y = ball.destY;
+    }
+
+    // ball cannot change direction again until it passes the middle
+    if (ball.x < canvas.width / 2 + 20 && ball.x > canvas.width / 2 - 20) {
+      console.log('ball can now change direction again');
+      ballChangeCD = false;
+    }
+
+    // hitting top or bottom of the canvas
+    if (ball.destY > 585 || ball.destY < 15) {
+      console.log('hit top/bot');
+      ballY *= -1;
+    }
+
+    // hitting left or right of the canvas
+    if (ball.destX > 1000) {
+      socket.emit('goal', { hash: hash, room: myRoom });
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.prevX = canvas.width / 2;
+      ball.prevY = canvas.height / 2;
+      ball.destX = canvas.width / 2;
+      ball.destY = canvas.height / 2;
+      ballX = 4;
+    } else if (ball.destX < 0) {
+      socket.emit('goal', { hash: hash2, room: myRoom });
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.prevX = canvas.width / 2;
+      ball.prevY = canvas.height / 2;
+      ball.destX = canvas.width / 2;
+      ball.destY = canvas.height / 2;
+      ballX = 4;
     }
 
     squareData.square = square;

@@ -1,10 +1,11 @@
+// code used from simple server collision by Cody Van De Mark
 const update = (data) => {
   
   
   // if the square doesn't already exist, make it so!
   if(!squares[data.square.hash]) {
-    console.log('new square created');
-    squares[data.square.hash] = data;
+    console.log('new square created: ' + data.square.hash);
+    squares[data.square.hash] = data.square;
     return;
   }
   
@@ -20,16 +21,15 @@ const update = (data) => {
   }
   
   const square = squares[data.square.hash];
-  square.prevX = data.prevX;
-  square.prevY = data.prevY;
-  square.destY = data.destY;
-  square.direction = data.direction;
-  square.moveLeft = data.moveLeft;
-  square.moveRight = data.moveRight;
-  square.moveDown = data.moveDown;
-  square.moveUp = data.moveUp;
+  square.prevX = data.square.prevX;
+  square.prevY = data.square.prevY;
+  square.destY = data.square.destY;
+  square.direction = data.square.direction;
+  square.moveLeft = data.square.moveLeft;
+  square.moveRight = data.square.moveRight;
+  square.moveDown = data.square.moveDown;
+  square.moveUp = data.square.moveUp;
   square.alpha = 0.05;
-  
 };
 
 const removeUser = (data) => {
@@ -73,21 +73,26 @@ const setUser = (data) => {
       const jrb = document.querySelector('#joinRoomButton');
       jrb.innerHTML = "";
       
-      
       ballMove = false;
     }
     
     // make the ball
     ball = {};
     ball.x = canvas.width/2;
-    ball.y = canvas.height + canvas.offsetHeight;
+    ball.y = canvas.height/2;
     ball.prevX = canvas.width/2;
-    ball.prevY = canvas.height + canvas.offsetHeight;
+    ball.prevY = canvas.height/2;
     ball.destX = canvas.width/2;
-    ball.destY = canvas.height + canvas.offsetHeight;
+    ball.destY = canvas.height/2;
+    ballChangeCD = false;
     
     requestAnimationFrame(redraw);
-  } 
+  } else {
+    console.log('other user');
+    
+    hash2 = data.player.hash;
+    squares[hash2] = data.player;
+  }
   
   
 };
@@ -149,14 +154,67 @@ const updatePosition = () => {
 
   const squareData = {};
   
-  if(side === 2) {
+  if(side === 2 && ballX && ballY) {
     
     ball.prevX = ball.x;
     ball.prevY = ball.y;
     
     if(ballMove) {
-      ball.destX += 1;
-      ball.destY += 1;
+      ball.destX += ballX;
+      ball.destY += ballY;
+    }
+    
+    // hitting left paddle
+    if(ball.destX <= squares[hash].x + 45 && ball.destX <= squares[hash2].x + 75 && ball.destY <= squares[hash].y + 120 && ball.destY >= squares[hash].y && ballChangeCD === false) {
+      ballX *= -1;
+      ballChangeCD = true;
+      console.log('hit left paddle');
+    } else {
+      ball.x = ball.destX;
+      ball.y = ball.destY;
+    }
+    
+    // hitting right paddle
+    if(ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 60 && ball.destY >= squares[hash2].y - 60 && ballChangeCD === false) {
+      ballX *= -1;
+      ballChangeCD = true;
+      console.log('hit right paddle');
+    } else {
+      ball.x = ball.destX;
+      ball.y = ball.destY;
+    }
+    
+    // ball cannot change direction again until it passes the middle
+    if(ball.x < canvas.width/2 + 20 && ball.x > canvas.width/2 - 20) {
+      console.log('ball can now change direction again');
+      ballChangeCD = false;
+    }
+    
+    // hitting top or bottom of the canvas
+    if(ball.destY > 585 || ball.destY < 15) {
+      console.log('hit top/bot');
+      ballY *= -1;
+    }
+    
+    // hitting left or right of the canvas
+    if(ball.destX > 1000) {
+      socket.emit('goal', { hash: hash, room: myRoom });
+      ball.x = canvas.width/2;
+      ball.y = canvas.height/2;
+      ball.prevX = canvas.width/2;
+      ball.prevY = canvas.height/2;
+      ball.destX = canvas.width/2;
+      ball.destY = canvas.height/2;
+      ballX = 4;
+    } else if(ball.destX < 0) {
+      socket.emit('goal', { hash: hash2, room: myRoom });
+      ball.x = canvas.width/2;
+      ball.y = canvas.height/2;
+      ball.prevX = canvas.width/2;
+      ball.prevY = canvas.height/2;
+      ball.destX = canvas.width/2;
+      ball.destY = canvas.height/2;
+      ballX = 4;
     }
     
     squareData.square = square;
