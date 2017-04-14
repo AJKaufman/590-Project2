@@ -119,21 +119,42 @@ const hostRoom = () => {
 };
 
 const scorePoint = (data) => {
-  if(data.hash === hash) {
-    console.log('left player score');
-    myScore++;
+  if(side === 2) {
+    if(data.hash === hash) {
+      console.log('left player score');
+      myScore++;
+      
+    } else if (data.hash === hash2) {
+      console.log('right player score');
+      oScore++;
+      
+    } else {
+      console.log('scorePoint method is not registering who got the point correctly');
+    }
+    
     let displayScore = document.querySelector('#score');
     displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore;
     displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore + "</div>";
-  } else if (data.hash === hash2) {
-    console.log('right player score');
-    oScore++;
-    let displayScore = document.querySelector('#score');
-    displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
-    displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
+    
   } else {
-    console.log('scorePoint method is not registering who got the point correctly');
+    if(data.hash === hash) {
+      console.log('left player score');
+      myScore++;
+    } else if (data.hash === hash2) {
+      console.log('right player score');
+      oScore++;
+    } else {
+      console.log('scorePoint method is not registering who got the point correctly');
+    }
+    
+      let displayScore = document.querySelector('#score');
+      displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
+      displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
+    
   }
+  
+  
+  
   
 };
 

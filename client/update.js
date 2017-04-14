@@ -175,7 +175,7 @@ const updatePosition = () => {
     }
     
     // hitting right paddle
-    if(ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 60 && ball.destY >= squares[hash2].y - 60 && ballChangeCD === false) {
+    if(ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 120 && ball.destY >= squares[hash2].y && ballChangeCD === false) {
       ballX *= -1;
       ballChangeCD = true;
       console.log('hit right paddle');

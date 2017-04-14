@@ -196,20 +196,34 @@ var hostRoom = function hostRoom() {
 };
 
 var scorePoint = function scorePoint(data) {
-  if (data.hash === hash) {
-    console.log('left player score');
-    myScore++;
+  if (side === 2) {
+    if (data.hash === hash) {
+      console.log('left player score');
+      myScore++;
+    } else if (data.hash === hash2) {
+      console.log('right player score');
+      oScore++;
+    } else {
+      console.log('scorePoint method is not registering who got the point correctly');
+    }
+
     var displayScore = document.querySelector('#score');
     displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore;
     displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore + "</div>";
-  } else if (data.hash === hash2) {
-    console.log('right player score');
-    oScore++;
+  } else {
+    if (data.hash === hash) {
+      console.log('left player score');
+      myScore++;
+    } else if (data.hash === hash2) {
+      console.log('right player score');
+      oScore++;
+    } else {
+      console.log('scorePoint method is not registering who got the point correctly');
+    }
+
     var _displayScore = document.querySelector('#score');
     _displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
     _displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
-  } else {
-    console.log('scorePoint method is not registering who got the point correctly');
   }
 };
 
@@ -421,7 +435,7 @@ var updatePosition = function updatePosition() {
     }
 
     // hitting right paddle
-    if (ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 60 && ball.destY >= squares[hash2].y - 60 && ballChangeCD === false) {
+    if (ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 120 && ball.destY >= squares[hash2].y && ballChangeCD === false) {
       ballX *= -1;
       ballChangeCD = true;
       console.log('hit right paddle');
