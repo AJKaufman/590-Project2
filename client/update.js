@@ -65,6 +65,7 @@ const setUser = (data) => {
       squares[hash].destX = 940;
       socket.emit('waitMessage', (data));
     } else {
+      gameOver = false;
       squares[hash].prevX = 30;
       squares[hash].x = 30;
       squares[hash].destX = 30;
@@ -106,26 +107,26 @@ const setUser = (data) => {
 
 const endGame = (data) => {
   console.log('endgame accomplished!');
-    
+  gameOver = true;
   console.log(data.side);
   
   // update innerHTML
   let displayScore = document.querySelector('#score');
   if(data.side === side) {
-    ball.x = canvas.width/2;
-    ball.y = canvas.height/2;
-    ball.prevX = canvas.width/2;
-    ball.prevY = canvas.height/2;
-    ball.destX = canvas.width/2;
-    ball.destY = canvas.height/2;
+    ball.x = 0;
+    ball.y = 0;
+    ball.prevX = 0;
+    ball.prevY = 0;
+    ball.destX = 0;
+    ball.destY = 0;
     displayScore.innerHTML = 'You win!';
   } else {
-    ball.x = canvas.width/2;
-    ball.y = canvas.height/2;
-    ball.prevX = canvas.width/2;
-    ball.prevY = canvas.height/2;
-    ball.destX = canvas.width/2;
-    ball.destY = canvas.height/2;
+    ball.x = 0;
+    ball.y = 0;
+    ball.prevX = 0;
+    ball.prevY = 0;
+    ball.destX = 0;
+    ball.destY = 0;
     displayScore.innerHTML = 'You lose...';
   }
   
@@ -159,7 +160,7 @@ const updatePosition = () => {
     }
     
     // hitting left paddle
-    if(ball.destX <= squares[hash].x + 45 && ball.destX <= squares[hash2].x + 75 && ball.destY <= squares[hash].y + 120 && ball.destY >= squares[hash].y && ballChangeCD === false) {
+    if(ball.destX <= squares[hash].x + 45 && ball.destX <= squares[hash2].x + 75 && ball.destY <= squares[hash].y + 120 && ball.destY >= squares[hash].y && ballChangeCD === false && gameOver === false) {
       ballX *= -1;
       ballChangeCD = true;
       console.log('hit left paddle');
@@ -169,7 +170,7 @@ const updatePosition = () => {
     }
     
     // hitting right paddle
-    if(ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 120 && ball.destY >= squares[hash2].y && ballChangeCD === false) {
+    if(ball.destX >= squares[hash2].x && ball.destX <= squares[hash2].x + 30 && ball.destY <= squares[hash2].y + 120 && ball.destY >= squares[hash2].y && ballChangeCD === false && gameOver === false) {
       ballX *= -1;
       ballChangeCD = true;
       console.log('hit right paddle');

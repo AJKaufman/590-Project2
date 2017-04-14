@@ -11,17 +11,6 @@ let currentRoomCount = 1;
 
 let io;
 
-const directions = {
-  DOWNLEFT: 0,
-  DOWN: 1,
-  DOWNRIGHT: 2,
-  LEFT: 3,
-  UPLEFT: 4,
-  RIGHT: 5,
-  UPRIGHT: 6,
-  UP: 7,
-};
-
 
 const setupSockets = (ioServer) => {
   io = ioServer;
@@ -48,7 +37,7 @@ const setupSockets = (ioServer) => {
 
       socket.hash = hash;
       players[hash] = new Player(hash);
-      
+
       console.log(`room${nextRoom}`);
 
       io.sockets.in(`room${nextRoom}`).emit('joined', {
@@ -68,9 +57,8 @@ const setupSockets = (ioServer) => {
         console.log('right');
       }
     });
-    
+
     socket.on('hostRoom', (data) => {
-      
       // send the user to their room
       socket.join(data.roomName);
 
@@ -94,18 +82,16 @@ const setupSockets = (ioServer) => {
         side: 2,
         room: data.roomName,
       });
-
     });
-    
-    
+
+
     socket.on('joinRoom', (data) => {
-      
       // send the user to their room
       socket.join(data.roomName);
 
       // if the room isn't in the roomList
       if (!roomList[data.roomName]) {
-        console.log(`room doesn't exist`);
+        console.log('room doesn\'t exist');
         return;
       }
 
@@ -123,19 +109,18 @@ const setupSockets = (ioServer) => {
         side: 1,
         room: data.roomName,
       });
-
     });
 
 
     socket.on('waitMessage', (data) => {
-      io.sockets.in(data.room).emit('removeWaitMessage', { data: data});
+      io.sockets.in(data.room).emit('removeWaitMessage', { data });
     });
 
     // allows player 2 to save the hash of player 1
     socket.on('sendP1Hash', (data) => {
-      io.sockets.in(data.room).emit('saveP1Hash', { hash2: data.hash2, player: players[data.hash2], });
+      io.sockets.in(data.room).emit('saveP1Hash', { hash2: data.hash2, player: players[data.hash2] });
     });
-    
+
     socket.on('movementUpdate', (data) => {
       players[socket.hash] = data.square;
       players[socket.hash].lastUpdate = new Date().getTime();
@@ -143,8 +128,8 @@ const setupSockets = (ioServer) => {
       physics.setPlayer(players[socket.hash]);
 
       let serverData = {};
-      
-      if(data.ball) {
+
+      if (data.ball) {
         serverData = {
           square: players[socket.hash],
           lastUpdate: players[socket.hash].lastUpdate,
@@ -154,21 +139,20 @@ const setupSockets = (ioServer) => {
         serverData = {
           square: players[socket.hash],
           lastUpdate: players[socket.hash].lastUpdate,
-        }
+        };
       }
-      
+
       io.sockets.in(data.room).emit('updatedMovement', serverData);
     });
 
     socket.on('goal', (data) => {
       io.sockets.in(data.room).emit('addPoint', { hash: data.hash });
     });
-    
+
     socket.on('sendVictor', (data) => {
       console.log(data.side);
       io.sockets.in(data.room).emit('endGame', { side: data.side });
     });
-    
   });
 };
 

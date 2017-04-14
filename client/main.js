@@ -19,6 +19,7 @@ let ballMove;
 let ballChangeCD;
 let ballX;
 let ballY;
+let gameOver;
 
 
 

@@ -63,7 +63,6 @@ const redraw = (time) => {
     
     // draw ball and local paddle
     if(ball) {
-      console.log(ball.x);
       ctx.fillRect(ball.x - 15, ball.y - 15, 30, 30);
       ctx.strokeRect(ball.x - 15, ball.y - 15, 30, 30);
     }
