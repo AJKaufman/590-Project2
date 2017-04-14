@@ -22,6 +22,7 @@ const update = (data) => {
   
   const square = squares[data.square.hash];
   square.prevX = data.square.prevX;
+  square.destX = data.square.destX;
   square.prevY = data.square.prevY;
   square.destY = data.square.destY;
   square.direction = data.square.direction;
@@ -30,13 +31,18 @@ const update = (data) => {
   square.moveDown = data.square.moveDown;
   square.moveUp = data.square.moveUp;
   square.alpha = 0.05;
+  
+  if(side === 1){
+    ball.prevX = data.ball.prevX;
+    ball.destX = data.ball.destX;
+    ball.prevY = data.ball.prevY;
+    ball.destY = data.ball.destY;
+    ball.alpha = 0.5;
+  }
+  
 };
 
-const removeUser = (data) => {
-  if(squares[data.hash]) {
-    delete squares[data.hash];
-  }
-};
+
 
 const setUser = (data) => {
     
@@ -84,11 +90,12 @@ const setUser = (data) => {
     ball.prevY = canvas.height/2;
     ball.destX = canvas.width/2;
     ball.destY = canvas.height/2;
+    ball.alpha = 0.5;
     ballChangeCD = false;
+
     
     requestAnimationFrame(redraw);
   } else {
-    console.log('other user');
     
     hash2 = data.player.hash;
     squares[hash2] = data.player;
@@ -97,45 +104,32 @@ const setUser = (data) => {
   
 };
 
-const sendHit = () => {
-  const square = squares[hash];
-  
-  const hit = {
-    hash: hash,
-    x: square.x,
-    y: square.y,
-    frames: 0,
-  };
-  
-  socket.emit('hit', hit);
-};
-
-const updateScore = (data) => {
-  if(data.hash === hash) {
-      myScore += 1;
-      console.log('My score is: ' + myScore);
-    }
-    
-    if(myScore > 9) {
-      console.log('I win!');
-      socket.emit('sendVictor', { room: myRoom, winner: userName } );
-    }
-};
-
 const endGame = (data) => {
   console.log('endgame accomplished!');
     
-  const signIn = document.querySelector('#signIn');
-  signIn.innerHTML = "";
-  const content = document.querySelector('#mainMessage');
-  content.innerHTML = "<b>" + data.winner + " is the winner!!!!</b>";
-
-  content.innerHTML += "<br /> <input id='restart' type='button' value='Enter new game?' />"
-
-  // restart button
-  const restartButton = document.querySelector('#restart');
-  restartButton.addEventListener('click', reload);
-}
+  console.log(data.side);
+  
+  // update innerHTML
+  let displayScore = document.querySelector('#score');
+  if(data.side === side) {
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.prevX = canvas.width/2;
+    ball.prevY = canvas.height/2;
+    ball.destX = canvas.width/2;
+    ball.destY = canvas.height/2;
+    displayScore.innerHTML = 'You win!';
+  } else {
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.prevX = canvas.width/2;
+    ball.prevY = canvas.height/2;
+    ball.destX = canvas.width/2;
+    ball.destY = canvas.height/2;
+    displayScore.innerHTML = 'You lose...';
+  }
+  
+};
 
 const updatePosition = () => {
   const square = squares[hash];
@@ -206,6 +200,7 @@ const updatePosition = () => {
       ball.destX = canvas.width/2;
       ball.destY = canvas.height/2;
       ballX = 4;
+      ballY = (Math.random() * 2) + 3;
     } else if(ball.destX < 0) {
       socket.emit('goal', { hash: hash2, room: myRoom });
       ball.x = canvas.width/2;
@@ -215,6 +210,7 @@ const updatePosition = () => {
       ball.destX = canvas.width/2;
       ball.destY = canvas.height/2;
       ballX = 4;
+      ballY = (Math.random() * 2) + 3;
     }
     
     squareData.square = square;

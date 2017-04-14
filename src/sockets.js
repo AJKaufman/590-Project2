@@ -164,56 +164,11 @@ const setupSockets = (ioServer) => {
       io.sockets.in(data.room).emit('addPoint', { hash: data.hash });
     });
     
-    socket.on('hit', (data) => {
-      const hit = data;
-
-      let handleHitEvent = true;
-
-      switch (hit.direction) {
-        case directions.DOWN: {
-          hit.width = 66;
-          hit.height = 183;
-          hit.y += 183;
-          break;
-        }
-        case directions.LEFT: {
-          hit.width = 183;
-          hit.height = 66;
-          hit.x -= 183;
-          break;
-        }
-        case directions.UP: {
-          hit.width = 66;
-          hit.height = 183;
-          hit.y -= 183;
-          break;
-        }
-        case directions.RIGHT: {
-          hit.width = 183;
-          hit.height = 66;
-          hit.x += 183;
-          break;
-        }
-        default: {
-          handleHitEvent = false;
-        }
-      }
-
-      if (handleHitEvent) {
-        io.sockets.in('room1').emit('hitUpdate', hit);
-        physics.addHit(hit);
-      }
+    socket.on('sendVictor', (data) => {
+      console.log(data.side);
+      io.sockets.in(data.room).emit('endGame', { side: data.side });
     });
-
-    socket.on('disconnect', () => {
-      io.sockets.in('room1').emit('left', players[socket.hash]);
-
-      delete players[socket.hash];
-
-      physics.setPlayerList(players);
-
-      socket.leave('room1');
-    });
+    
   });
 };
 

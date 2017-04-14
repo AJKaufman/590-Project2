@@ -43,8 +43,8 @@ var redraw = function redraw(time) {
 
     square.x = lerp(square.prevX, square.destX, square.alpha);
     square.y = lerp(square.prevY, square.destY, square.alpha);
-    ball.x = lerp(ball.prevX, ball.destX, 0.5);
-    ball.y = lerp(ball.prevY, ball.destY, 0.5);
+    ball.x = lerp(ball.prevX, ball.destX, ball.alpha);
+    ball.y = lerp(ball.prevY, ball.destY, ball.alpha);
 
     // if we are mid animation or moving in any direction
     if (square.frame > 0 || square.moveUp || square.moveDown) {
@@ -64,7 +64,9 @@ var redraw = function redraw(time) {
 
     // draw ball and local paddle
     if (ball) {
+      console.log(ball.x);
       ctx.fillRect(ball.x - 15, ball.y - 15, 30, 30);
+      ctx.strokeRect(ball.x - 15, ball.y - 15, 30, 30);
     }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
 
@@ -200,9 +202,19 @@ var scorePoint = function scorePoint(data) {
     if (data.hash === hash) {
       console.log('left player score');
       myScore++;
+
+      if (myScore > 9) {
+        console.log('p1 wins!');
+        socket.emit('sendVictor', { room: myRoom, side: 2 });
+      }
     } else if (data.hash === hash2) {
       console.log('right player score');
       oScore++;
+
+      if (oScore > 9) {
+        console.log('p2 wins!');
+        socket.emit('sendVictor', { room: myRoom, side: 1 });
+      }
     } else {
       console.log('scorePoint method is not registering who got the point correctly');
     }
@@ -243,14 +255,8 @@ var init = function init() {
     socket.on('saveP1Hash', saveP1Hash);
     socket.on('updatedMovement', update);
     socket.on('addPoint', scorePoint);
-    socket.on('left', removeUser);
-    //  // gives the player a point if they earned it in the last round
-    //  // checks if the player won the game
-    //  socket.on('givePoint', updateScore);
-    //  
-    //  // ends the game
-    //  socket.on('endGame', endGame);
-    //
+    socket.on('endGame', endGame);
+
     document.querySelector('#joinButton').onclick = joinGame;
     document.querySelector('.hostNameButton').onclick = hostRoom;
     document.querySelector('.joinNameButton').onclick = joinRoom;
@@ -285,6 +291,7 @@ var update = function update(data) {
 
   var square = squares[data.square.hash];
   square.prevX = data.square.prevX;
+  square.destX = data.square.destX;
   square.prevY = data.square.prevY;
   square.destY = data.square.destY;
   square.direction = data.square.direction;
@@ -293,11 +300,13 @@ var update = function update(data) {
   square.moveDown = data.square.moveDown;
   square.moveUp = data.square.moveUp;
   square.alpha = 0.05;
-};
 
-var removeUser = function removeUser(data) {
-  if (squares[data.hash]) {
-    delete squares[data.hash];
+  if (side === 1) {
+    ball.prevX = data.ball.prevX;
+    ball.destX = data.ball.destX;
+    ball.prevY = data.ball.prevY;
+    ball.destY = data.ball.destY;
+    ball.alpha = 0.5;
   }
 };
 
@@ -347,55 +356,41 @@ var setUser = function setUser(data) {
     ball.prevY = canvas.height / 2;
     ball.destX = canvas.width / 2;
     ball.destY = canvas.height / 2;
+    ball.alpha = 0.5;
     ballChangeCD = false;
 
     requestAnimationFrame(redraw);
   } else {
-    console.log('other user');
 
     hash2 = data.player.hash;
     squares[hash2] = data.player;
   }
 };
 
-var sendHit = function sendHit() {
-  var square = squares[hash];
-
-  var hit = {
-    hash: hash,
-    x: square.x,
-    y: square.y,
-    frames: 0
-  };
-
-  socket.emit('hit', hit);
-};
-
-var updateScore = function updateScore(data) {
-  if (data.hash === hash) {
-    myScore += 1;
-    console.log('My score is: ' + myScore);
-  }
-
-  if (myScore > 9) {
-    console.log('I win!');
-    socket.emit('sendVictor', { room: myRoom, winner: userName });
-  }
-};
-
 var endGame = function endGame(data) {
   console.log('endgame accomplished!');
 
-  var signIn = document.querySelector('#signIn');
-  signIn.innerHTML = "";
-  var content = document.querySelector('#mainMessage');
-  content.innerHTML = "<b>" + data.winner + " is the winner!!!!</b>";
+  console.log(data.side);
 
-  content.innerHTML += "<br /> <input id='restart' type='button' value='Enter new game?' />";
-
-  // restart button
-  var restartButton = document.querySelector('#restart');
-  restartButton.addEventListener('click', reload);
+  // update innerHTML
+  var displayScore = document.querySelector('#score');
+  if (data.side === side) {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.prevX = canvas.width / 2;
+    ball.prevY = canvas.height / 2;
+    ball.destX = canvas.width / 2;
+    ball.destY = canvas.height / 2;
+    displayScore.innerHTML = 'You win!';
+  } else {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.prevX = canvas.width / 2;
+    ball.prevY = canvas.height / 2;
+    ball.destX = canvas.width / 2;
+    ball.destY = canvas.height / 2;
+    displayScore.innerHTML = 'You lose...';
+  }
 };
 
 var updatePosition = function updatePosition() {
@@ -466,6 +461,7 @@ var updatePosition = function updatePosition() {
       ball.destX = canvas.width / 2;
       ball.destY = canvas.height / 2;
       ballX = 4;
+      ballY = Math.random() * 2 + 3;
     } else if (ball.destX < 0) {
       socket.emit('goal', { hash: hash2, room: myRoom });
       ball.x = canvas.width / 2;
@@ -475,6 +471,7 @@ var updatePosition = function updatePosition() {
       ball.destX = canvas.width / 2;
       ball.destY = canvas.height / 2;
       ballX = 4;
+      ballY = Math.random() * 2 + 3;
     }
 
     squareData.square = square;

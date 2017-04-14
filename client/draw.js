@@ -42,8 +42,8 @@ const redraw = (time) => {
 
     square.x = lerp(square.prevX, square.destX, square.alpha);
     square.y = lerp(square.prevY, square.destY, square.alpha);
-    ball.x = lerp(ball.prevX, ball.destX, 0.5);
-    ball.y = lerp(ball.prevY, ball.destY, 0.5);
+    ball.x = lerp(ball.prevX, ball.destX, ball.alpha);
+    ball.y = lerp(ball.prevY, ball.destY, ball.alpha);
 
     // if we are mid animation or moving in any direction
     if(square.frame > 0 || (square.moveUp || square.moveDown)) {
@@ -63,7 +63,9 @@ const redraw = (time) => {
     
     // draw ball and local paddle
     if(ball) {
+      console.log(ball.x);
       ctx.fillRect(ball.x - 15, ball.y - 15, 30, 30);
+      ctx.strokeRect(ball.x - 15, ball.y - 15, 30, 30);
     }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
     

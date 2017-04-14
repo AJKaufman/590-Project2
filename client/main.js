@@ -45,7 +45,7 @@ const keyDownHandler = (e) => {
 };
 
 const keyUpHandler = (e) => {
-  var keyPressed = e.which;
+  let keyPressed = e.which;
   const square = squares[hash];
 
   // W OR UP
@@ -124,9 +124,19 @@ const scorePoint = (data) => {
       console.log('left player score');
       myScore++;
       
+      if(myScore > 9) {
+        console.log('p1 wins!');
+        socket.emit('sendVictor', { room: myRoom, side: 2, } );
+      }
+      
     } else if (data.hash === hash2) {
       console.log('right player score');
       oScore++;
+      
+      if(oScore > 9) {
+        console.log('p2 wins!');
+        socket.emit('sendVictor', { room: myRoom, side: 1, } );
+      }
       
     } else {
       console.log('scorePoint method is not registering who got the point correctly');
@@ -143,20 +153,17 @@ const scorePoint = (data) => {
     } else if (data.hash === hash2) {
       console.log('right player score');
       oScore++;
+      
     } else {
       console.log('scorePoint method is not registering who got the point correctly');
     }
     
       let displayScore = document.querySelector('#score');
       displayScore.innerHTML = '<div style="float: right; padding-right: 20%; padding-top: 2%;">' + myScore;
-      displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>";
-    
+      displayScore.innerHTML += '</div> <div style="float: left; padding-left: 20%; padding-top: 2%;">' + oScore + "</div>"; 
   }
-  
-  
-  
-  
 };
+
 
 const init = () => {
  
@@ -174,14 +181,8 @@ const init = () => {
     socket.on('saveP1Hash', saveP1Hash);
     socket.on('updatedMovement', update);
     socket.on('addPoint', scorePoint);
-    socket.on('left', removeUser);
-  //  // gives the player a point if they earned it in the last round
-  //  // checks if the player won the game
-  //  socket.on('givePoint', updateScore);
-  //  
-  //  // ends the game
-  //  socket.on('endGame', endGame);
-  //
+    socket.on('endGame', endGame);
+
     document.querySelector('#joinButton').onclick = joinGame;
     document.querySelector('.hostNameButton').onclick = hostRoom;
     document.querySelector('.joinNameButton').onclick = joinRoom;
