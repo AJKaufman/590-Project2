@@ -10,8 +10,11 @@ let animationFrame;
 let squares = {};
 let attacks = [];
 let myScore;
+let oScore;
 let myRoom;
-let player;
+let side;
+let ball;
+let ballMove;
 
 
 
@@ -23,7 +26,7 @@ const reload = () => {
 
 
 const keyDownHandler = (e) => {
-  var keyPressed = e.which;
+  let keyPressed = e.which;
   const square = squares[hash];
 
   // W OR UP
@@ -51,6 +54,53 @@ const keyUpHandler = (e) => {
   }
 };
 
+const removeWaitMessage = () => {
+  // update innerHTML
+  let content = document.querySelector('#mainMessage');
+  content.innerHTML = "";
+  let displayScore = document.querySelector('#score');
+  displayScore.innerHTML = '<div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore;
+  displayScore.innerHTML += '</div> <div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore + "</div>";
+  const signIn = document.querySelector('#signIn');
+  signIn.innerHTML = "";  
+  const jButt = document.querySelector('#joinButton');
+  jButt.innerHTML = "";  
+  const hrb = document.querySelector('#hostRoomButton');
+  hrb.innerHTML = "";
+  const jrb = document.querySelector('#joinRoomButton');
+  jrb.innerHTML = "";
+  
+  // get the ball rolling
+  ballMove = true;
+};
+
+
+const joinGame = () => {
+  console.log('join GAME clicked');
+  socket.emit('requestAccess', {});
+};
+
+const joinRoom = () => {
+  if(document.querySelector('.joinName').value) {
+    const roomName = document.querySelector('.joinName').value;
+    console.log('join ROOM clicked');
+    socket.emit('joinRoom', { roomName: roomName });
+  } else {
+    return;
+  }
+};
+
+const hostRoom = () => {
+  if(document.querySelector('.hostName').value) {
+    const roomName = document.querySelector('.hostName').value;
+    console.log('host ROOM clicked');
+    socket.emit('hostRoom', { roomName: roomName });
+  } else {
+    return;
+  }
+  
+};
+
 const init = () => {
  
   canvas = document.querySelector('#canvas');
@@ -58,18 +108,47 @@ const init = () => {
 
   socket = io.connect();
   
-  socket.on('joined', setUser);
-  socket.on('updatedMovement', update);
-  socket.on('left', removeUser);
-//  // gives the player a point if they earned it in the last round
-//  // checks if the player won the game
-//  socket.on('givePoint', updateScore);
-//  
-//  // ends the game
-//  socket.on('endGame', endGame);
+  socket.on('connect', () => {
+    
+    console.log('connected');
+    
+    socket.on('joined', setUser);
+    socket.on('removeWaitMessage', removeWaitMessage);
+    socket.on('updatedMovement', update);
+    socket.on('left', removeUser);
+  //  // gives the player a point if they earned it in the last round
+  //  // checks if the player won the game
+  //  socket.on('givePoint', updateScore);
+  //  
+  //  // ends the game
+  //  socket.on('endGame', endGame);
+  //
+    document.querySelector('#joinButton').onclick = joinGame;
+    document.querySelector('.hostNameButton').onclick = hostRoom;
+    document.querySelector('.joinNameButton').onclick = joinRoom;
+    document.body.addEventListener('keydown', keyDownHandler);
+    document.body.addEventListener('keyup', keyUpHandler);
+  });
   
-  document.body.addEventListener('keydown', keyDownHandler);
-  document.body.addEventListener('keyup', keyUpHandler);
 };
 
 window.onload = init;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

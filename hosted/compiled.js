@@ -12,7 +12,7 @@ var directions = {
 };
 
 var spriteSizes = {
-  WIDTH: 61,
+  WIDTH: 31,
   HEIGHT: 121
 };
 
@@ -23,7 +23,7 @@ var lerp = function lerp(v0, v1, alpha) {
 var redraw = function redraw(time) {
   updatePosition();
 
-  ctx.clearRect(0, 0, 500, 500);
+  ctx.clearRect(0, 0, 1000, 1000);
 
   var keys = Object.keys(squares);
 
@@ -31,7 +31,7 @@ var redraw = function redraw(time) {
 
     var square = squares[keys[i]];
 
-    //if alpha less than 1, increase it by 0.01
+    //if alpha less than 1, increase it by 0.05
     if (square.alpha < 1) square.alpha += 0.05;
 
     if (square.hash === hash) {
@@ -57,8 +57,12 @@ var redraw = function redraw(time) {
     }
 
     ctx.fillStyle = 'white';
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = '#1238CC';
 
+    // draw ball and local paddle
+    if (ball) {
+      ctx.fillRect(ball.x - 25, square.y - 25, 50, 50);
+    }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
 
     ctx.strokeRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
@@ -80,8 +84,11 @@ var animationFrame = void 0;
 var squares = {};
 var attacks = [];
 var myScore = void 0;
+var oScore = void 0;
 var myRoom = void 0;
-var player = void 0;
+var side = void 0;
+var ball = void 0;
+var ballMove = void 0;
 
 // The reload function. 
 // Seperated due to the automatic initiation due to ES6 syntax
@@ -117,6 +124,51 @@ var keyUpHandler = function keyUpHandler(e) {
     }
 };
 
+var removeWaitMessage = function removeWaitMessage() {
+  // update innerHTML
+  var content = document.querySelector('#mainMessage');
+  content.innerHTML = "";
+  var displayScore = document.querySelector('#score');
+  displayScore.innerHTML = '<div style="float: left; padding-left: 20%; padding-top: 2%;">' + myScore;
+  displayScore.innerHTML += '</div> <div style="float: right; padding-right: 20%; padding-top: 2%;">' + oScore + "</div>";
+  var signIn = document.querySelector('#signIn');
+  signIn.innerHTML = "";
+  var jButt = document.querySelector('#joinButton');
+  jButt.innerHTML = "";
+  var hrb = document.querySelector('#hostRoomButton');
+  hrb.innerHTML = "";
+  var jrb = document.querySelector('#joinRoomButton');
+  jrb.innerHTML = "";
+
+  // get the ball rolling
+  ballMove = true;
+};
+
+var joinGame = function joinGame() {
+  console.log('join GAME clicked');
+  socket.emit('requestAccess', {});
+};
+
+var joinRoom = function joinRoom() {
+  if (document.querySelector('.joinName').value) {
+    var roomName = document.querySelector('.joinName').value;
+    console.log('join ROOM clicked');
+    socket.emit('joinRoom', { roomName: roomName });
+  } else {
+    return;
+  }
+};
+
+var hostRoom = function hostRoom() {
+  if (document.querySelector('.hostName').value) {
+    var roomName = document.querySelector('.hostName').value;
+    console.log('host ROOM clicked');
+    socket.emit('hostRoom', { roomName: roomName });
+  } else {
+    return;
+  }
+};
+
 var init = function init() {
 
   canvas = document.querySelector('#canvas');
@@ -124,18 +176,27 @@ var init = function init() {
 
   socket = io.connect();
 
-  socket.on('joined', setUser);
-  socket.on('updatedMovement', update);
-  socket.on('left', removeUser);
-  //  // gives the player a point if they earned it in the last round
-  //  // checks if the player won the game
-  //  socket.on('givePoint', updateScore);
-  //  
-  //  // ends the game
-  //  socket.on('endGame', endGame);
+  socket.on('connect', function () {
 
-  document.body.addEventListener('keydown', keyDownHandler);
-  document.body.addEventListener('keyup', keyUpHandler);
+    console.log('connected');
+
+    socket.on('joined', setUser);
+    socket.on('removeWaitMessage', removeWaitMessage);
+    socket.on('updatedMovement', update);
+    socket.on('left', removeUser);
+    //  // gives the player a point if they earned it in the last round
+    //  // checks if the player won the game
+    //  socket.on('givePoint', updateScore);
+    //  
+    //  // ends the game
+    //  socket.on('endGame', endGame);
+    //
+    document.querySelector('#joinButton').onclick = joinGame;
+    document.querySelector('.hostNameButton').onclick = hostRoom;
+    document.querySelector('.joinNameButton').onclick = joinRoom;
+    document.body.addEventListener('keydown', keyDownHandler);
+    document.body.addEventListener('keyup', keyUpHandler);
+  });
 };
 
 window.onload = init;
@@ -144,27 +205,26 @@ window.onload = init;
 var update = function update(data) {
 
   // if the square doesn't already exist, make it so!
-  if (!squares[data.hash]) {
+  if (!squares[data.square.hash]) {
     console.log('new square created');
-    squares[data.hash] = data;
+    squares[data.square.hash] = data;
     return;
   }
 
   // if it's the same hash as the client, skip this because you already moved locally
-  if (data.hash === hash) {
+  if (data.square.hash === hash) {
     return;
   }
 
   // if lastUpdate didn't work correctly skip
-  if (squares[data.hash].lastUpdate >= data.lastUpdate) {
+  if (squares[data.square.hash].lastUpdate >= data.lastUpdate) {
     console.log('lastUpdate did not work correctly');
     return;
   }
 
-  var square = squares[data.hash];
+  var square = squares[data.square.hash];
   square.prevX = data.prevX;
   square.prevY = data.prevY;
-  square.destX = data.destX;
   square.destY = data.destY;
   square.direction = data.direction;
   square.moveLeft = data.moveLeft;
@@ -183,23 +243,49 @@ var removeUser = function removeUser(data) {
 var setUser = function setUser(data) {
 
   if (!hash) {
+
+    console.log('setting user, first instance of hash');
+
     myScore = 0;
+    oScore = 0;
     hash = data.player.hash;
     myRoom = data.room;
     squares[hash] = data.player;
+    side = data.side;
+
+    console.log(side);
 
     if (data.side === 1) {
-      squares[hash].prevX += 490;
-      squares[hash].x += 490;
+      squares[hash].prevX = 940;
+      squares[hash].x = 940;
+      squares[hash].destX = 940;
+      socket.emit('waitMessage', data);
+    } else {
+      squares[hash].prevX = 30;
+      squares[hash].x = 30;
+      squares[hash].destX = 30;
+      var score = document.querySelector('#score');
+      score.innerHTML = "<p>Waiting for your opponent...</p>";
+      var signIn = document.querySelector('#signIn');
+      signIn.innerHTML = "";
+      var jButt = document.querySelector('#joinButton');
+      jButt.innerHTML = "";
+      var hrb = document.querySelector('#hostRoomButton');
+      hrb.innerHTML = "";
+      var jrb = document.querySelector('#joinRoomButton');
+      jrb.innerHTML = "";
+
+      ballMove = false;
     }
 
-    // update innerHTML
-    var signIn = document.querySelector('#signIn');
-    //signIn.innerHTML = "<p>Waiting for your opponent...</p>";  
-    var content = document.querySelector('#mainMessage');
-    content.innerHTML = "";
-    var displayScore = document.querySelector('#score');
-    displayScore.innerHTML = 'My score: ' + myScore;
+    // make the ball
+    ball = {};
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height + canvas.offsetHeight;
+    ball.prevX = canvas.width / 2;
+    ball.prevY = canvas.height + canvas.offsetHeight;
+    ball.destX = canvas.width / 2;
+    ball.destY = canvas.height + canvas.offsetHeight;
 
     requestAnimationFrame(redraw);
   }
@@ -251,18 +337,34 @@ var updatePosition = function updatePosition() {
   square.prevY = square.y;
 
   if (square.moveUp && square.destY > 0) {
-    square.destY -= 2;
+    square.destY -= 10;
   }
-  if (square.moveDown && square.destY < 400) {
-    square.destY += 2;
+  if (square.moveDown && square.destY < 480) {
+    square.destY += 10;
   }
 
   square.alpha = 0.05;
 
-  var squareData = {
-    square: square,
-    room: myRoom
-  };
+  var squareData = {};
+
+  if (side === 2) {
+
+    ball.prevX = ball.x;
+    ball.prevY = ball.y;
+
+    if (ballMove) {
+      ball.destX += 1;
+      ball.destY += 1;
+    }
+
+    squareData.square = square;
+    squareData.room = myRoom;
+    squareData.ball = ball;
+  } else {
+
+    squareData.square = square;
+    squareData.room = myRoom;
+  }
 
   socket.emit('movementUpdate', squareData);
 };

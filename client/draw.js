@@ -10,7 +10,7 @@ const directions = {
 };
 
 const spriteSizes = {
-  WIDTH: 61,
+  WIDTH: 31,
   HEIGHT: 121
 };
 
@@ -21,7 +21,7 @@ const lerp = (v0, v1, alpha) => {
 const redraw = (time) => {
   updatePosition();
 
-  ctx.clearRect(0, 0, 500, 500);
+  ctx.clearRect(0, 0, 1000, 1000);
 
   const keys = Object.keys(squares);
 
@@ -29,7 +29,7 @@ const redraw = (time) => {
 
     const square = squares[keys[i]];
 
-    //if alpha less than 1, increase it by 0.01
+    //if alpha less than 1, increase it by 0.05
     if(square.alpha < 1) square.alpha += 0.05;
 
     if(square.hash === hash) {
@@ -56,8 +56,12 @@ const redraw = (time) => {
     }
 
     ctx.fillStyle = 'white';
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = '#1238CC';
     
+    // draw ball and local paddle
+    if(ball) {
+      ctx.fillRect(ball.x - 25, square.y - 25, 50, 50);
+    }
     ctx.fillRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);
     
     ctx.strokeRect(square.x, square.y, spriteSizes.WIDTH, spriteSizes.HEIGHT);

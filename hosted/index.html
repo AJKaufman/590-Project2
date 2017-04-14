@@ -21,12 +21,13 @@
         margin: 0;
         padding:0;
         background-color: #284B63;
-        color: #EEF0EB;
+        color: #0F1A1F;
         text-align: center;
       }
 
       div {
         text-align: center;
+        background-color: #E3C9A3;
       }
       
       p {
@@ -35,23 +36,48 @@
         width: 50%; 
       }
       
+       .setup {
+      }
+      
+      #mainMessage {
+      }
+      
       #welcome {
         line-height: 1.5em;
       }
       
-      .setup {
-        margin-bottom: 1.5em;
-      }
-      
       #signIn {
-        background-color: #2E648F;
-        opacity: 0.7;
+        width: 66%;
+        margin: auto;
       }
       
       #score {
-        font-size: 2.4em;
+        font-size: 3em;
+        width: 66%;
+        margin: auto;
       }
       
+      #joinButton {
+        width: 66%;
+        margin: 20px;
+        margin: auto;
+      }
+      
+      #hostRoomButton {
+        margin: 20px;
+        padding-top: 1%;
+        width: 66%;
+        margin: auto;
+      }
+      
+      #joinRoomButton {
+        margin: 20px;
+        padding-top: 1%;
+        width: 66%;
+        margin: auto;
+        padding-bottom: 2%;
+        margin-bottom: 1.5em;
+      }
       
     </style>
     <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
@@ -59,18 +85,41 @@
 	<script src="/assets/compiled.js"> </script>
 </head>
 <body>
-  <div id='score'></div> <br />
-  <canvas id="canvas" height="500" width="500">Please use an HTML 5 browser</canvas>  
-  <div id='mainMessage'></div>
+  
+  
+  <div id='score'>PONG!</div>
+  
   
   <div id="signIn">
     <div class="setup">
-      <label id="welcome" >Pong!</label> <br />
+      <label id="welcome" ></label> <br />
       <label id="welcome" >W = Up</label> <br />
       <label id="welcome" >S = Down</label> <br />
-      <label id="welcome" >Hit the ball past your opponent to get points!</label> <br />
-      <label id="welcome" >First to 10 points wins!</label><br />
+      <label id="welcome" >First to 10 points wins!</label> <br />
+      <label id="welcome" ></label><br />
     </div>
   </div>
+  
+  <div id="joinButton">
+    <input type="button" value="Find me a game!">    
+  </div>
+
+  <div id="hostRoomButton">
+    <label class="host">Host Room:</label>
+    <input class="hostName" type="text" value="Room Name">
+    <input class="hostNameButton" type="button" value="Host Game">
+  </div>
+
+  <div id="joinRoomButton">
+    <label class="join">Join Room:</label>
+    <input class="joinName" type="text" value="Room Name">
+    <input class="joinNameButton" type="button" value="Join Game">
+  </div>
+  
+  
+  <canvas id="canvas" height="600" width="1000">Please use an HTML 5 browser</canvas>  
+  <div id='mainMessage'></div>
+
+  
 </body>
 </html>

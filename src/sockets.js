@@ -29,54 +29,130 @@ const setupSockets = (ioServer) => {
   io.on('connection', (sock) => {
     const socket = sock;
 
-    // new user in this room
-    currentRoomCount++;
-    
-    // send the user to their room
-    socket.join(`room${nextRoom}`);
+    socket.on('requestAccess', () => {
+      // new user in this room
+      currentRoomCount++;
 
+      // send the user to their room
+      socket.join(`room${nextRoom}`);
 
-    // if the room isn't in the roomList
-    if (!roomList[`room${nextRoom}`]) {
-      console.log(`adding room${nextRoom} to roomList`);
-      roomList[`room${nextRoom}`] = {};
-    }
+      // if the room isn't in the roomList
+      if (!roomList[`room${nextRoom}`]) {
+        console.log(`adding room${nextRoom} to roomList`);
+        roomList[`room${nextRoom}`] = {};
+      }
 
-    // generate the user's unique hash code
-    const idString = `${socket.id}${new Date().getTime()}`;
-    const hash = xxh.h32(idString, 0xCAFEBABE).toString(16);
+      // generate the user's unique hash code
+      const idString = `${socket.id}${new Date().getTime()}`;
+      const hash = xxh.h32(idString, 0xCAFEBABE).toString(16);
 
-    
-    socket.hash = hash;
+      socket.hash = hash;
+      players[hash] = new Player(hash);
 
-    
-    players[hash] = new Player(hash);
+      console.log(`room${nextRoom}`);
 
-    io.sockets.in(`room${nextRoom}`).emit('joined', {
-      player: players[hash],
-      side: currentRoomCount,
-      room: `room${nextRoom}`,
+      io.sockets.in(`room${nextRoom}`).emit('joined', {
+        player: players[hash],
+        side: currentRoomCount,
+        room: `room${nextRoom}`,
+      });
+
+      // create the playerData and send back left or right side
+      if (currentRoomCount >= 2) {
+        currentRoomCount = 0;
+
+        console.log('left');
+      } else {
+        nextRoom++;
+
+        console.log('right');
+      }
     });
     
-    // create the playerData and send back left or right side
-    if (currentRoomCount >= 2) {
-      currentRoomCount = 0;
+    socket.on('hostRoom', (data) => {
       
-      console.log("left");
-    } else {
-      nextRoom++;
-      
-      console.log("right");
-    }
+      // send the user to their room
+      socket.join(data.roomName);
+
+      // if the room isn't in the roomList
+      if (!roomList[data.roomName]) {
+        console.log(`adding ${data.roomName} to roomList`);
+        roomList[data.roomName] = {};
+      }
+
+      // generate the user's unique hash code
+      const idString = `${socket.id}${new Date().getTime()}`;
+      const hash = xxh.h32(idString, 0xCAFEBABE).toString(16);
+
+      socket.hash = hash;
+      players[hash] = new Player(hash);
+
+      console.log(data.roomName);
+
+      io.sockets.in(data.roomName).emit('joined', {
+        player: players[hash],
+        side: 2,
+        room: data.roomName,
+      });
+
+    });
     
+    
+    socket.on('joinRoom', (data) => {
+      
+      // send the user to their room
+      socket.join(data.roomName);
+
+      // if the room isn't in the roomList
+      if (!roomList[data.roomName]) {
+        console.log(`room doesn't exist`);
+        return;
+      }
+
+      // generate the user's unique hash code
+      const idString = `${socket.id}${new Date().getTime()}`;
+      const hash = xxh.h32(idString, 0xCAFEBABE).toString(16);
+
+      socket.hash = hash;
+      players[hash] = new Player(hash);
+
+      console.log(data.roomName);
+
+      io.sockets.in(data.roomName).emit('joined', {
+        player: players[hash],
+        side: 1,
+        room: data.roomName,
+      });
+
+    });
+
+
+    socket.on('waitMessage', (data) => {
+      io.sockets.in(data.room).emit('removeWaitMessage', {});
+    });
 
     socket.on('movementUpdate', (data) => {
       players[socket.hash] = data.square;
       players[socket.hash].lastUpdate = new Date().getTime();
 
       physics.setPlayer(players[socket.hash]);
+
+      let serverData = {};
       
-      io.sockets.in(data.room).emit('updatedMovement', players[socket.hash]);
+      if(data.ball) {
+        serverData = {
+          square: players[socket.hash],
+          lastUpdate: players[socket.hash].lastUpdate,
+          ball: data.ball,
+        };
+      } else {
+        serverData = {
+          square: players[socket.hash],
+          lastUpdate: players[socket.hash].lastUpdate,
+        }
+      }
+      
+      io.sockets.in(data.room).emit('updatedMovement', serverData);
     });
 
     socket.on('hit', (data) => {
